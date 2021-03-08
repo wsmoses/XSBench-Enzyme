@@ -59,6 +59,11 @@ SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationDa
 	gpuErrchk( cudaMalloc((void **) &GSD.nuclide_grid, sz) );
 	gpuErrchk( cudaMemcpy(GSD.nuclide_grid, SD.nuclide_grid, sz, cudaMemcpyHostToDevice) );
 	total_sz += sz;
+
+	sz = GSD.length_nuclide_grid * sizeof(NuclideGridPoint);
+	gpuErrchk( cudaMalloc((void **) &GSD.d_nuclide_grid, sz) );
+	gpuErrchk( cudaMemcpy(GSD.d_nuclide_grid, SD.d_nuclide_grid, sz, cudaMemcpyHostToDevice) );
+	total_sz += sz;
 	
 	// Allocate verification array on device. This structure is not needed on CPU, so we don't
 	// have to copy anything over.
@@ -108,6 +113,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	// Initialize Nuclide Grid
 	SD.length_nuclide_grid = in.n_isotopes * in.n_gridpoints;
 	SD.nuclide_grid     = (NuclideGridPoint *) malloc( SD.length_nuclide_grid * sizeof(NuclideGridPoint));
+	SD.d_nuclide_grid     = (NuclideGridPoint *) calloc( SD.length_nuclide_grid , sizeof(NuclideGridPoint));
 	assert(SD.nuclide_grid != NULL);
 	nbytes += SD.length_nuclide_grid * sizeof(NuclideGridPoint);
 	for( int i = 0; i < SD.length_nuclide_grid; i++ )

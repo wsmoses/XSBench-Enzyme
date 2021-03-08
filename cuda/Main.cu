@@ -41,6 +41,8 @@ int main( int argc, char* argv[] )
 	// Move data to GPU
 	SimulationData GSD = move_simulation_data_to_device( in, mype, SD );
 
+  	cudaDeviceSetLimit(cudaLimitMallocHeapSize, 1*1024*1024*1024);
+
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation
 	// This is the section that should be profiled, as it reflects a 
@@ -62,7 +64,7 @@ int main( int argc, char* argv[] )
 	if( in.simulation_method == EVENT_BASED )
 	{
 		if( in.kernel_id == 0 )
-			verification = run_event_based_simulation_baseline(in, GSD, mype);
+			verification = run_event_based_simulation_baseline(in, SD, mype);
 		else if( in.kernel_id == 1 )
 			verification = run_event_based_simulation_optimization_1(in, GSD, mype);
 		else if( in.kernel_id == 2 )

@@ -6,7 +6,7 @@ COMPILER    = nvidia
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
-SM_VERSION  = 70
+SM_VERSION  = 60
 
 #===============================================================================
 # Program name & source code list
@@ -32,12 +32,14 @@ obj = $(source:.cu=.o)
 CFLAGS := 
 
 # Linker Flags
-LDFLAGS = -lm
+LDFLAGS = "-lcudart_static" "-ldl" "-lrt" -lpthread -lm
 
 # Regular gcc Compiler
 ifeq ($(COMPILER),nvidia)
-  CC = nvcc
-  CFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION) -std=c++11
+  CC = /mnt/sabrent/wmoses/llvm13/buildallfast/bin/clang++
+  # CFLAGS += -fno-experimental-new-pass-manager -O3 --cuda-path=/usr/local/cuda-11.0 -L/usr/local/cuda-11.0/lib64 --cuda-gpu-arch=sm_$(SM_VERSION)  -std=c++11 -Xclang -load -Xclang /home/wmoses/git/Enzyme/enzyme/build13D/Enzyme/ClangEnzyme-13.so 
+  # CFLAGS += -fno-experimental-new-pass-manager -O3 --cuda-path=/usr/local/cuda-11.0 -L/usr/local/cuda-11.0/lib64 --cuda-gpu-arch=sm_$(SM_VERSION)  -std=c++11 -Xclang -load -Xclang /home/wmoses/git/Enzyme/enzyme/build13/Enzyme/ClangEnzyme-13.so 
+  CFLAGS += -fno-experimental-new-pass-manager --cuda-path=/usr/local/cuda-11.0 -L/usr/local/cuda-11.0/lib64 --cuda-gpu-arch=sm_$(SM_VERSION)  -std=c++11 -Xclang -load -Xclang /home/wmoses/git/Enzyme/enzyme/build13Fast/Enzyme/ClangEnzyme-13.so 
 endif
 
 # Debug Flags

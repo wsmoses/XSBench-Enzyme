@@ -1,6 +1,7 @@
 #ifndef __XSBENCH_HEADER_H__
 #define __XSBENCH_HEADER_H__
 
+#define _CubLog
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
@@ -68,6 +69,7 @@ typedef struct{
 	double * unionized_energy_array;    // Length = length_unionized_energy_array
 	int * index_grid;                   // Length = length_index_grid
 	NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
+	NuclideGridPoint * d_nuclide_grid;
 	int length_num_nucs;
 	int length_concs;
 	int length_mats;
@@ -98,23 +100,23 @@ SimulationData binary_read( Inputs in );
 // Simulation.cu
 unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData SD, int mype);
 __global__ void xs_lookup_kernel_baseline(Inputs in, SimulationData GSD );
-__device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
+__host__ __device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            double * __restrict__ egrid, int * __restrict__ index_data,
                            NuclideGridPoint * __restrict__ nuclide_grids,
                            long idx, double * __restrict__ xs_vector, int grid_type, int hash_bins );
-__device__ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
+__host__ __device__ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          long n_gridpoints, int * __restrict__ num_nucs,
                          double * __restrict__ concs,
                          double * __restrict__ egrid, int * __restrict__ index_data,
                          NuclideGridPoint * __restrict__ nuclide_grids,
                          int * __restrict__ mats,
                          double * __restrict__ macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
-__device__ long grid_search( long n, double quarry, double * __restrict__ A);
+__host__ __device__ long grid_search( long n, double quarry, double * __restrict__ A);
 __host__ __device__ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
-__device__ int pick_mat( uint64_t * seed );
+__host__ __device__ int pick_mat( uint64_t * seed );
 __host__ __device__ double LCG_random_double(uint64_t * seed);
-__device__ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);
+__host__ __device__ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);
 
 unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData GSD, int mype);
 __global__ void sampling_kernel(Inputs in, SimulationData GSD );

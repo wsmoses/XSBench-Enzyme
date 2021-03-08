@@ -477,6 +477,7 @@ SimulationData binary_read( Inputs in )
 	SD.concs = (double *) malloc(SD.length_concs * sizeof(double));
 	SD.mats = (int *) malloc(SD.length_mats * sizeof(int));
 	SD.nuclide_grid = (NuclideGridPoint *) malloc(SD.length_nuclide_grid * sizeof(NuclideGridPoint));
+	SD.d_nuclide_grid = (NuclideGridPoint *) calloc(SD.length_nuclide_grid , sizeof(NuclideGridPoint));
 	SD.index_grid = (int *) malloc( SD.length_index_grid * sizeof(int));
 	SD.unionized_energy_array = (double *) malloc( SD.length_unionized_energy_array * sizeof(double));
 
