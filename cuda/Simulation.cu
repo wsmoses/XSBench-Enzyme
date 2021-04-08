@@ -75,7 +75,7 @@ __global__ void xs_lookup_kernel_baseline(Inputs in, SimulationData GSD )
 	//	printf("Running correct sim\n");
 		
 	// Perform macroscopic Cross Section Lookup
-	#if 0
+	#ifdef FORWARD_PASS
 	calculate_macro_xs(
 			p_energy,        // Sampled neutron energy (in lethargy)
 			mat,             // Sampled material type index neutron is in
@@ -137,8 +137,10 @@ __global__ void xs_lookup_kernel_baseline(Inputs in, SimulationData GSD )
 }
 
 // Calculates the microscopic cross section for a given nuclide & energy
-//__attribute__((always_inline))
 //__attribute__((noinline))
+#ifdef ALWAYS_INLINE
+__attribute__((always_inline))
+#endif
 __device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            double * __restrict__ egrid, int * __restrict__ index_data,
@@ -147,6 +149,10 @@ __device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	// Variables
 	double f;
 	NuclideGridPoint * low, * high;
+
+	#ifdef TEMPLATIZE
+	grid_type = UNIONIZED;
+	#endif
 
 	// If using only the nuclide grid, we must perform a binary search
 	// to find the energy location in this particular nuclide's grid.
@@ -162,7 +168,8 @@ __device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		else
 			low = &nuclide_grids[nuc*n_gridpoints + idx];
 	}
-	else if( grid_type == UNIONIZED) // Unionized Energy Grid - we already know the index, no binary search needed.
+	else 
+	if( grid_type == UNIONIZED) // Unionized Energy Grid - we already know the index, no binary search needed.
 	{
 		// pull ptr from energy grid and check to ensure that
 		// we're not reading off the end of the nuclide's grid
@@ -170,8 +177,7 @@ __device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 			low = &nuclide_grids[nuc*n_gridpoints + index_data[idx * n_isotopes + nuc] - 1];
 		else
 			low = &nuclide_grids[nuc*n_gridpoints + index_data[idx * n_isotopes + nuc]];
-	}
-	else // Hash grid
+	} else // Hash grid
 	{
 		// load lower bounding index
 		int u_low = index_data[idx * n_isotopes + nuc];
