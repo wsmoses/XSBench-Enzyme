@@ -31,9 +31,20 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	////////////////////////////////////////////////////////////////////////////////
 	if( mype == 0)	printf("Reducing verification results...\n");
 
-    //double here = 1.23456;
-    //gpuErrchk( cudaMemcpy(&here, &GSD.d_nuclide_grid[0].energy, sizeof(double), cudaMemcpyDeviceToHost) );
-    //printf("here=%f\n", here);
+	#ifdef PRINT
+	#ifdef FORWARD_PASS
+    double here = 1.23456;
+    gpuErrchk( cudaMemcpy(&here, GSD.dout, sizeof(double), cudaMemcpyDeviceToHost) );
+    printf("fwdhere=%f\n", here);
+	#else
+	//size_t num = (GSD.length_nuclide_grid < 10 ) ? GSD.length_nuclide_grid  : 10 ;
+	size_t num = 1;
+    double here[num];
+	gpuErrchk( cudaMemcpy(&here[0], &GSD.d_nuclide_grid[0].energy, num * sizeof(double), cudaMemcpyDeviceToHost) );
+	for (int i=0; i<num; i++)
+    printf("bwdhere=%f\n", here[i]);
+	#endif
+	#endif
 
 	unsigned long verification_scalar = thrust::reduce(thrust::device, GSD.verification, GSD.verification + in.lookups, 0);
 	gpuErrchk( cudaPeekAtLastError() );
@@ -70,7 +81,12 @@ __global__ void xs_lookup_kernel_baseline(Inputs in, SimulationData GSD )
 	int mat         = pick_mat(&seed); 
 		
 	double macro_xs_vector[5] = {0};
+	#ifdef PRINT
+	double d_macro_xs_vector[5] = {0.0};
+	d_macro_xs_vector[0] = 1.0;
+	#else
 	double d_macro_xs_vector[5] = {1.0};
+	#endif
 	//if (i == 0)
 	//	printf("Running correct sim\n");
 		
@@ -92,6 +108,29 @@ __global__ void xs_lookup_kernel_baseline(Inputs in, SimulationData GSD )
 			in.hash_bins,    // Number of hash bins used (if using hash lookup type)
 			GSD.max_num_nucs  // Maximum number of nuclides present in any material
 			);
+
+			#ifdef PRINT
+	double macro_xs_vector2[5] = {0};
+		calculate_macro_xs(
+			p_energy,        // Sampled neutron energy (in lethargy)
+			mat,             // Sampled material type index neutron is in
+			in.n_isotopes,   // Total number of isotopes in simulation
+			in.n_gridpoints, // Number of gridpoints per isotope in simulation
+			GSD.num_nucs,     // 1-D array with number of nuclides per material
+			GSD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
+			GSD.unionized_energy_array, // 1-D Unionized energy array
+			GSD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
+			GSD.d_nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
+			GSD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
+			macro_xs_vector2, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
+			in.grid_type,    // Lookup type (nuclide, hash, or unionized)
+			in.hash_bins,    // Number of hash bins used (if using hash lookup type)
+			GSD.max_num_nucs  // Maximum number of nuclides present in any material
+			);
+			//if ((macro_xs_vector2[0] - macro_xs_vector[0]) / DELTA)
+			//	printf("i=%d dd=%f, out2=%f out1=%f | in2=%f in1=%f\n", i, (macro_xs_vector2[0] - macro_xs_vector[0]) / DELTA, macro_xs_vector2[0], macro_xs_vector[0], GSD.d_nuclide_grid[0].energy, GSD.nuclide_grid[0].energy); 
+			atomicAdd(GSD.dout, (macro_xs_vector2[0] - macro_xs_vector[0]) / DELTA );
+			#endif
     #else
 	__enzyme_autodiff((void*)calculate_macro_xs,
 			enzyme_const, p_energy,        // Sampled neutron energy (in lethargy)

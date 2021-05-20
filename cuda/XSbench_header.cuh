@@ -83,7 +83,12 @@ typedef struct{
 	int length_p_energy_samples;
 	int * mat_samples;
 	int length_mat_samples;
+#ifdef PRINT
+	double *dout;
+#endif
 } SimulationData;
+
+#define DELTA 1e-6
 
 // io.cu
 void logo(int version);

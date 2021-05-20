@@ -71,7 +71,13 @@ SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationDa
 	gpuErrchk( cudaMalloc((void **) &GSD.verification, sz) );
 	total_sz += sz;
 	GSD.length_verification = in.lookups;
-	
+
+#ifdef PRINT
+	gpuErrchk( cudaMalloc((void **) &GSD.dout, sizeof(double)) );
+	double zero = 0;
+	gpuErrchk( cudaMemcpy(GSD.dout, &zero, sizeof(double), cudaMemcpyHostToDevice) );
+#endif
+
 	// Synchronize
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
@@ -129,7 +135,11 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	// Sort so that each nuclide has data stored in ascending energy order.
 	for( int i = 0; i < in.n_isotopes; i++ )
 		qsort( &SD.nuclide_grid[i*in.n_gridpoints], in.n_gridpoints, sizeof(NuclideGridPoint), NGP_compare);
-	
+
+	#ifdef FORWARD_PASS
+	memcpy(SD.d_nuclide_grid, SD.nuclide_grid, SD.length_nuclide_grid * sizeof(NuclideGridPoint));
+	SD.d_nuclide_grid[0].energy += DELTA;
+	#endif	
 	// error debug check
 	/*
 	for( int i = 0; i < in.n_isotopes; i++ )

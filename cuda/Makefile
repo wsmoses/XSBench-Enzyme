@@ -11,6 +11,7 @@ NEWCACHE    ?= no
 AA          ?= yes
 PHISTRUCT   ?= yes
 TEMPLATIZE  ?= no
+VERIFY      ?= no
 
 DEBUG       = no
 PROFILE     = no
@@ -103,6 +104,10 @@ endif
 
 ifeq ($(TEMPLATIZE),yes)
   CFLAGS += -DTEMPLATIZE=1
+endif
+
+ifeq ($(VERIFY),yes)
+  CFLAGS += -DPRINT=1
 endif
 
 #===============================================================================
